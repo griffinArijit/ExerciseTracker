@@ -73,6 +73,7 @@ def inject_custom_css():
 inject_custom_css()
 
 # === MongoDB Connection Setup ===
+# === MongoDB Connection Setup ===
 def init_mongo_connection():
     username = os.getenv("MONGO_USER", "Amritesh")
     password = os.getenv("MONGO_PASS", "OpPgCVoOPpakzgoc")
@@ -92,8 +93,8 @@ def init_mongo_connection():
     try:
         client = MongoClient(
             connection_string,
-            ssl=True,
-            ssl_cert_reqs=ssl.CERT_NONE,
+            tls=True,
+            tlsAllowInvalidCertificates=True,
             serverSelectionTimeoutMS=30000
         )
         client.server_info()  # Test connection
