@@ -1,4 +1,4 @@
- 
+  
 import cv2
 import streamlit as st
 import mediapipe as mp
@@ -258,6 +258,8 @@ else:
             summary_md += f"- **{ex.capitalize()}**: {reps} reps\n"
     st.sidebar.markdown(summary_md)
 
+ # ... (previous imports and setup code remains the same) ...
+
 def end_session():
     st.session_state.detection_active = False
     
@@ -297,29 +299,6 @@ def end_session():
         st.success("Session Ended. Check the sidebar for your complete exercise history.")
     except Exception as e:
         st.error(f"Failed to fetch exercise history: {e}")
-st.session_state.detection_active = False
-    if st.session_state.cap:
-        st.session_state.cap.release()
-    cv2.destroyAllWindows()
-    frame_placeholder.empty()
-
-    # Get all exercise data for the user
-    user_data = collection.find_one({"user_id": user_id})
-    if not user_data or "exercise_summary" not in user_data:
-        st.sidebar.warning("No exercise data found for this user.")
-        return
-    
-    session_md = "### Your Exercise History\n"
-    for summary in sorted(user_data["exercise_summary"], key=lambda x: x["date"], reverse=True):
-        session_md += f"**{summary['date']}**\n"
-        for ex, reps in summary.items():
-            if ex != "date" and reps > 0:
-                session_md += f"- {ex.capitalize()}: {reps} reps\n"
-        session_md += "\n"
-    
-    st.sidebar.markdown(session_md)
-    st.success("Session Ended. Check the sidebar for your complete exercise history.")
-
 # === Button Controls ===
 col1, col2, col3 = st.columns(3)
 with col1:
