@@ -93,8 +93,12 @@ try:
     )
     
     client = MongoClient(connection_string,tls=True,
-    tlsAllowInvalidCertificates=True,
-    tlsInsecure=True)
+      tls=True,
+    tlsAllowInvalidCertificates=False,
+    tlsCertificateKeyFile=None,
+    connectTimeoutMS=30000,
+    socketTimeoutMS=30000,
+    serverSelectionTimeoutMS=30000)
     client.server_info()  # Test connection
     db = client["exercise_app"]
     collection = db["exercise_data"]
