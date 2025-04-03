@@ -31,7 +31,7 @@ inject_custom_css()
 try:
     username = "arijitpal"
     password = "Arijitpal@987"
-    connection_string = f"mongodb+srv://{username}:{password}@cluster0.aiqxn.mongodb.net/exercise_app?retryWrites=true&w=majority"
+    connection_string = f"mongodb+srv://arijitpal:Arijitpal@987@cluster0.aiqxn.mongodb.net/"
     client = MongoClient(connection_string, serverSelectionTimeoutMS=5000)
     client.server_info()
     db = client["exercise_app"]
