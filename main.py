@@ -1,9 +1,11 @@
- 
 import cv2
 import streamlit as st
 import mediapipe as mp
 from pymongo import MongoClient
 from datetime import date
+from urllib.parse import quote_plus
+import ssl
+import os
 from utils import *
 from body_part_angle import BodyPartAngle
 from types_of_exercise import TypeOfExercise
@@ -70,51 +72,47 @@ def inject_custom_css():
 # Call the CSS injection at the start
 inject_custom_css()
 
-#=== Check for Special User ID in Query Parameters ===
-user_id = st.query_params["user_id"]
+# === MongoDB Connection Setup ===
+def init_mongo_connection():
+    username = os.getenv("MONGO_USER", "Amritesh")
+    password = os.getenv("MONGO_PASS", "OpPgCVoOPpakzgoc")
+    encoded_username = quote_plus(username)
+    encoded_password = quote_plus(password)
+
+    connection_string = (
+        f"mongodb+srv://{encoded_username}:{encoded_password}@"
+        "cluster0.rdwmp.mongodb.net/exercise_app?"
+        "retryWrites=true&w=majority&"
+        "tls=true&"
+        "tlsAllowInvalidCertificates=true&"
+        "connectTimeoutMS=30000&"
+        "socketTimeoutMS=30000"
+    )
+
+    try:
+        client = MongoClient(
+            connection_string,
+            ssl=True,
+            ssl_cert_reqs=ssl.CERT_NONE,
+            serverSelectionTimeoutMS=30000
+        )
+        client.server_info()  # Test connection
+        return client.exercise_app
+    except Exception as e:
+        st.error(f"Failed to connect to MongoDB: {e}")
+        return None
+
+# Initialize MongoDB connection in session state
+if 'db' not in st.session_state:
+    st.session_state.db = init_mongo_connection()
+    if st.session_state.db is None:
+        st.stop()
+
+# === Check for Special User ID in Query Parameters ===
+user_id = st.query_params.get("user_id")
 if not user_id:
     st.error("User ID not provided. Please access the link with a valid user id (e.g. ?user_id=yourID).")
     st.stop()
-
-# === Connect to MongoDB ===
-from urllib.parse import quote_plus
-
-# === Connect to MongoDB ===
-from pymongo import MongoClient
-from urllib.parse import quote_plus
-import ssl
-
-username = "Amritesh"
-password = "OpPgCVoOPpakzgoc"
-encoded_username = quote_plus(username)
-encoded_password = quote_plus(password)
-
-connection_string = (
-    f"mongodb+srv://{encoded_username}:{encoded_password}@"
-    "cluster0.rdwmp.mongodb.net/exercise_app?"
-    "retryWrites=true&w=majority&"
-    "tls=true&"
-    "tlsAllowInvalidCertificates=false&"
-    "ssl_cert_reqs=CERT_NONE&"
-    "connectTimeoutMS=30000&"
-    "socketTimeoutMS=30000"
-)
-
-try:
-    client = MongoClient(
-        connection_string,
-        ssl=True,
-        ssl_cert_reqs=ssl.CERT_NONE,
-        serverSelectionTimeoutMS=30000
-    )
-    # Test the connection
-    client.server_info()
-    collection = client.exercise_app
-    print("Successfully connected to MongoDB!")
-except Exception as e:
-    print(f"Failed to connect to MongoDB: {e}")
-    
-
 
 # Get today's date for tracking
 today_str = date.today().isoformat()
@@ -126,13 +124,13 @@ if 'cap' not in st.session_state:
     st.session_state.cap = None
 if 'exercise_summary' not in st.session_state:
     # Check if user exists and has data for today
-    existing_user = collection.find_one({"user_id": user_id})
+    existing_user = st.session_state.db.users.find_one({"user_id": user_id})
     
     if existing_user:
         # Find today's summary if it exists
         today_summary = next(
             (item for item in existing_user.get("exercise_summary", []) 
-            if item["date"] == today_str),
+             if item["date"] == today_str),
             None
         )
         
@@ -161,7 +159,7 @@ if 'exercise_summary' not in st.session_state:
             "squat": 0,
             "walk": 0
         }
-        collection.insert_one({
+        st.session_state.db.users.insert_one({
             "user_id": user_id,
             "exercise_summary": [st.session_state.exercise_summary]
         })
@@ -232,39 +230,33 @@ def stop_detection():
     frame_placeholder.empty()
 
     # Update MongoDB with today's exercise data
-    # collection.update_one(
-    #     {"user_id": user_id, "exercise_summary.date": today_str},
-    #     {"$set": {"exercise_summary.$": st.session_state.exercise_summary}},
-    #     upsert=True
-    # )
-    # First check if the document exists
-existing = collection.find_one({"user_id": user_id})
-
-if existing:
-    # Check if today's entry exists
-    today_entry_exists = any(
-        entry.get("date") == today_str 
-        for entry in existing.get("exercise_summary", [])
-    )
+    existing = st.session_state.db.users.find_one({"user_id": user_id})
     
-    if today_entry_exists:
-        # Update existing entry
-        collection.update_one(
-            {"user_id": user_id, "exercise_summary.date": today_str},
-            {"$set": {"exercise_summary.$": st.session_state.exercise_summary}}
+    if existing:
+        # Check if today's entry exists
+        today_entry_exists = any(
+            entry.get("date") == today_str 
+            for entry in existing.get("exercise_summary", [])
         )
+        
+        if today_entry_exists:
+            # Update existing entry
+            st.session_state.db.users.update_one(
+                {"user_id": user_id, "exercise_summary.date": today_str},
+                {"$set": {"exercise_summary.$": st.session_state.exercise_summary}}
+            )
+        else:
+            # Add new entry to array
+            st.session_state.db.users.update_one(
+                {"user_id": user_id},
+                {"$push": {"exercise_summary": st.session_state.exercise_summary}}
+            )
     else:
-        # Add new entry to array
-        collection.update_one(
-            {"user_id": user_id},
-            {"$push": {"exercise_summary": st.session_state.exercise_summary}}
-        )
-else:
-    # Create new document with today's entry
-    collection.insert_one({
-        "user_id": user_id,
-        "exercise_summary": [st.session_state.exercise_summary]
-    })
+        # Create new document with today's entry
+        st.session_state.db.users.insert_one({
+            "user_id": user_id,
+            "exercise_summary": [st.session_state.exercise_summary]
+        })
 
     # Display today's summary
     summary_md = "### Today's Exercise Summary\n"
@@ -281,7 +273,7 @@ def end_session():
     frame_placeholder.empty()
 
     # Get all exercise data for the user
-    user_data = collection.find_one({"user_id": user_id})
+    user_data = st.session_state.db.users.find_one({"user_id": user_id})
     if not user_data or "exercise_summary" not in user_data:
         st.sidebar.warning("No exercise data found for this user.")
         return
