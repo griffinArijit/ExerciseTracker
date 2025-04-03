@@ -28,17 +28,18 @@ def inject_custom_css():
 inject_custom_css()
 
 # === MongoDB Connection ===
+from urllib.parse import quote_plus  # Add this import
+
+# === MongoDB Connection ===
 try:
-    username = "arijitpal"
-    password = "Arijitpal@987"
-    encoded_username = quote_plus(username)
-    encoded_password = quote_plus(password)
-    
-    connection_string = (
-        f"mongodb+srv://{encoded_username}:{encoded_password}@"
-        f"cluster0.aiqxn.mongodb.net/exercise_app?"
-        f"retryWrites=true&w=majority&tls=true"
-    )
+    username = quote_plus("arijitpal")  # Encode username
+    password = quote_plus("Arijitpal@987")  # Encode password
+    connection_string = f"mongodb+srv://{username}:{password}@cluster0.aiqxn.mongodb.net/exercise_app?retryWrites=true&w=majority"
+
+    client = MongoClient(connection_string, serverSelectionTimeoutMS=5000)
+    client.server_info()  # Test connection
+    db = client["exercise_app"]
+    collection = db["exercise_data"]
 except Exception as e:
     st.error(f"Failed to connect to MongoDB: {str(e)}")
     st.stop()
