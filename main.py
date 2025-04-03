@@ -1,5 +1,4 @@
- 
-import cv2
+ import cv2
 import streamlit as st
 import mediapipe as mp
 from pymongo import MongoClient
