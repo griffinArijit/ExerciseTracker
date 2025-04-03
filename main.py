@@ -109,7 +109,7 @@ try:
     )
     # Test the connection
     client.server_info()
-    db = client.exercise_app
+    collection = client.exercise_app
     print("Successfully connected to MongoDB!")
 except Exception as e:
     print(f"Failed to connect to MongoDB: {e}")
