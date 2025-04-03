@@ -92,7 +92,9 @@ try:
         f"retryWrites=true&w=majority"
     )
     
-    client = MongoClient(connection_string, serverSelectionTimeoutMS=5000)
+    client = MongoClient(connection_string,tls=True,
+    tlsAllowInvalidCertificates=True,
+    tlsInsecure=True)
     client.server_info()  # Test connection
     db = client["exercise_app"]
     collection = db["exercise_data"]
