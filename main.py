@@ -80,32 +80,41 @@ if not user_id:
 from urllib.parse import quote_plus
 
 # === Connect to MongoDB ===
+from pymongo import MongoClient
+from urllib.parse import quote_plus
+import ssl
+
+username = "Amritesh"
+password = "OpPgCVoOPpakzgoc"
+encoded_username = quote_plus(username)
+encoded_password = quote_plus(password)
+
+connection_string = (
+    f"mongodb+srv://{encoded_username}:{encoded_password}@"
+    "cluster0.rdwmp.mongodb.net/exercise_app?"
+    "retryWrites=true&w=majority&"
+    "tls=true&"
+    "tlsAllowInvalidCertificates=false&"
+    "ssl_cert_reqs=CERT_NONE&"
+    "connectTimeoutMS=30000&"
+    "socketTimeoutMS=30000"
+)
+
 try:
-    username = "Amritesh"
-    password = "OpPgCVoOPpakzgoc"
-    encoded_username = quote_plus(username)
-    encoded_password = quote_plus(password)
-    #mongodb+srv://arijitpal:<db_password>@cluster0.aiqxn.mongodb.net/
-    connection_string = (
-        f"mongodb+srv://{encoded_username}:{encoded_password}@"
-        f"cluster0.rdwmp.mongodb.net/exercise_app?"
-        f"retryWrites=true&w=majority"
+    client = MongoClient(
+        connection_string,
+        ssl=True,
+        ssl_cert_reqs=ssl.CERT_NONE,
+        serverSelectionTimeoutMS=30000
     )
-    
-    client = MongoClient(connection_string,
-    tls=True,
-    tlsAllowInvalidCertificates=False,
-    tlsCertificateKeyFile=None,
-    connectTimeoutMS=30000,
-    socketTimeoutMS=30000,
-    serverSelectionTimeoutMS=30000)
-    client.server_info()  # Test connection
-    db = client["exercise_app"]
-    collection = db["exercise_data"]
-    
+    # Test the connection
+    client.server_info()
+    db = client.exercise_app
+    print("Successfully connected to MongoDB!")
 except Exception as e:
-    st.error(f"Failed to connect to MongoDB: {str(e)}")
-    st.stop()
+    print(f"Failed to connect to MongoDB: {e}")
+    
+
 
 # Get today's date for tracking
 today_str = date.today().isoformat()
