@@ -81,14 +81,14 @@ from urllib.parse import quote_plus
 
 # === Connect to MongoDB ===
 try:
-    username = "arijitpal"
-    password = "Arijitpal@987"
+    username = "Amritesh"
+    password = "OpPgCVoOPpakzgoc"
     encoded_username = quote_plus(username)
     encoded_password = quote_plus(password)
     #mongodb+srv://arijitpal:<db_password>@cluster0.aiqxn.mongodb.net/
     connection_string = (
         f"mongodb+srv://{encoded_username}:{encoded_password}@"
-        f"cluster0.aiqxn.mongodb.net/exercise_app?"
+        f"cluster0.rdwmp.mongodb.net/exercise_app?"
         f"retryWrites=true&w=majority"
     )
     
