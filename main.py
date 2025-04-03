@@ -29,13 +29,16 @@ inject_custom_css()
 
 # === MongoDB Connection ===
 try:
-    username = "arijitpal"
+   username = "arijitpal"
     password = "Arijitpal@987"
-    connection_string = f"mongodb+srv://arijitpal:Arijitpal@987@cluster0.aiqxn.mongodb.net/"
-    client = MongoClient(connection_string, serverSelectionTimeoutMS=5000)
-    client.server_info()
-    db = client["exercise_app"]
-    collection = db["exercise_data"]
+    encoded_username = quote_plus(username)
+    encoded_password = quote_plus(password)
+    
+    connection_string = (
+        f"mongodb+srv://{encoded_username}:{encoded_password}@"
+        f"cluster0.aiqxn.mongodb.net/exercise_app?"
+        f"retryWrites=true&w=majority&tls=true"
+    )
 except Exception as e:
     st.error(f"Failed to connect to MongoDB: {str(e)}")
     st.stop()
