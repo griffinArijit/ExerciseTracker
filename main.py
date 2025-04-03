@@ -93,7 +93,7 @@ try:
     )
     
     client = MongoClient(connection_string,tls=True,
-      tls=True,
+    tls=True,
     tlsAllowInvalidCertificates=False,
     tlsCertificateKeyFile=None,
     connectTimeoutMS=30000,
