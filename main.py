@@ -1,3 +1,4 @@
+ 
 import cv2
 import streamlit as st
 import mediapipe as mp
@@ -259,6 +260,44 @@ else:
 
 def end_session():
     st.session_state.detection_active = False
+    
+    # Safely release video capture if it exists
+    if 'cap' in st.session_state and st.session_state.cap is not None:
+        try:
+            if st.session_state.cap.isOpened():
+                st.session_state.cap.release()
+        except Exception as e:
+            st.warning(f"Error releasing video capture: {e}")
+    
+    # Only call destroyAllWindows if we're not in Streamlit Cloud
+    if not os.getenv("STREAMLIT_SERVER_RUNNING"):
+        try:
+            cv2.destroyAllWindows()
+        except Exception as e:
+            st.warning(f"Error closing windows: {e}")
+    
+    frame_placeholder.empty()
+
+    # Get all exercise data for the user
+    try:
+        user_data = collection.find_one({"user_id": user_id})
+        if not user_data or "exercise_summary" not in user_data:
+            st.sidebar.warning("No exercise data found for this user.")
+            return
+        
+        session_md = "### Your Exercise History\n"
+        for summary in sorted(user_data["exercise_summary"], key=lambda x: x["date"], reverse=True):
+            session_md += f"**{summary['date']}**\n"
+            for ex, reps in summary.items():
+                if ex != "date" and reps > 0:
+                    session_md += f"- {ex.capitalize()}: {reps} reps\n"
+            session_md += "\n"
+        
+        st.sidebar.markdown(session_md)
+        st.success("Session Ended. Check the sidebar for your complete exercise history.")
+    except Exception as e:
+        st.error(f"Failed to fetch exercise history: {e}")
+st.session_state.detection_active = False
     if st.session_state.cap:
         st.session_state.cap.release()
     cv2.destroyAllWindows()
