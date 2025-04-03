@@ -29,7 +29,7 @@ inject_custom_css()
 
 # === MongoDB Connection ===
 try:
-   username = "arijitpal"
+    username = "arijitpal"
     password = "Arijitpal@987"
     encoded_username = quote_plus(username)
     encoded_password = quote_plus(password)
