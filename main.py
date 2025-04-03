@@ -92,7 +92,7 @@ try:
         f"retryWrites=true&w=majority"
     )
     
-    client = MongoClient(connection_string,tls=True,
+    client = MongoClient(connection_string,
     tls=True,
     tlsAllowInvalidCertificates=False,
     tlsCertificateKeyFile=None,
